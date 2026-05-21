@@ -1,42 +1,38 @@
-# Base image https://hub.docker.com/u/rocker/
 FROM rocker/shiny:4.5.2
 
-# system libraries of general use
-## install debian packages
-RUN apt-get update -qq && apt-get -y --no-install-recommends install \
-    libxml2-dev \
-    libcairo2-dev \
-    libsqlite3-dev \
-    libpq-dev \
-    libssh2-1-dev \
-    unixodbc-dev \
-    libcurl4-openssl-dev \
-    libssl-dev \
-    libharfbuzz-dev \
-    libfribidi-dev \
-    libfreetype6-dev \
-    libpng-dev \
-    libtiff5-dev \
-    libjpeg-dev \
-    libgdal-dev
+# Системные зависимости
+RUN apt-get update -qq && apt-get install -y --no-install-recommends \
+    # Базовые
+    libxml2-dev libcurl4-openssl-dev libssl-dev libcairo2-dev \
+    libharfbuzz-dev libfribidi-dev libfreetype6-dev \
+    libpng-dev libtiff5-dev libjpeg-dev \
+    # Для fs, httpuv, processx
+    libuv1-dev cmake \
+    # Для гео-пакетов: sf, terra, raster
+    libgdal-dev gdal-bin libproj-dev libgeos-dev libudunits2-dev \
+    # Для s2
+    libabsl-dev \
+    # Для V8
+    libnode-dev nodejs \
+    # Утилиты
+    curl git \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-## update system libraries
-RUN apt-get update && \
-    apt-get upgrade -y && \
-    apt-get clean
+WORKDIR /app
 
-# copy necessary files
-## renv.lock file
-COPY ./renv.lock ./renv.lock
-## app folder
-COPY . ./app
+# Копируем renv-файлы
+COPY renv.lock ./renv.lock
+COPY renv/ ./renv/      
+COPY .Rprofile ./.Rprofile 
 
-# install renv & restore packages
-RUN Rscript -e 'install.packages("renv", repos = "https://cloud.r-project.org")' && \
-    Rscript -e 'renv::restore(prompt = FALSE, rebuild = FALSE)'
+# Установка renv + восстановление пакетов (одна сессия!)
+RUN Rscript -e ' \
+    install.packages("renv", repos = "https://cloud.r-project.org"); \
+    renv::restore(prompt = FALSE, rebuild = FALSE, clean = TRUE) \
+  '
 
-# expose port
+# Код приложения
+COPY . .
+
 EXPOSE 3838
-
-# run app on container start
 CMD ["R", "-e", "shiny::runApp('/app', host = '0.0.0.0', port = 3838)"]
