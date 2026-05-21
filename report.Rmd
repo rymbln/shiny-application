@@ -1,0 +1,205 @@
+---
+title: Отчет по исследованию
+output:
+  html_document:
+    toc: true
+    self_contained: true
+params:
+  data: NULL
+---
+
+## Пациенты
+
+```{r, include=FALSE}
+data <- params$data
+```
+
+В набор данных включено `r nrow(data)` пациентов из `r length(unique(data$CENTER))` центров. 
+
+Распределение пациентов по полу: 
+
+- Мужчины: `r data %>% filter(grepl("Мужчины",PAT_GROUP)) %>% nrow()`
+
+- Женщины: `r data %>% filter(grepl("Женщины",PAT_GROUP)) %>% nrow()`
+
+- Дети: `r data %>% filter(grepl("Дети",PAT_GROUP)) %>% nrow()`
+
+## Структура выделенных организмов
+
+### Мужчины
+
+```{r, echo=FALSE, message=FALSE, fig.width = 12}
+org_male <- data %>%
+  filter(grepl("Мужчины",PAT_GROUP)) %>%
+  group_by(STRAIN) %>%
+  summarise(Count = n()) %>%
+  ungroup() %>%
+  mutate(Percent = round(100 * Count / sum(Count))) %>%
+  arrange(desc(Percent)) %>%
+  mutate(csum = rev(cumsum(rev(Count))),
+         pos = Count/2 + lead(csum, 1),
+         pos = if_else(is.na(pos), Count/2, pos))
+
+validate(need(nrow(org_male) > 0, "Данные отсутствуют"))
+
+ggplot(org_male, aes(x = "" , y = Count, fill = fct_inorder(STRAIN))) +
+  geom_col(width = 1, color = 1) +
+  coord_polar(theta = "y") +
+  scale_fill_brewer(palette = "Pastel1") +
+  geom_label_repel(data = org_male,
+                   aes(y = pos, label = paste0(Count, " (", Percent, "%)")),
+                   size = 4.5, nudge_x = 1, show.legend = FALSE) +
+  guides(fill = guide_legend(title = "Организм")) +
+  theme_void()
+```
+
+### Женщины
+
+```{r, echo=FALSE, message=FALSE, fig.width = 12}
+org_female <- data %>%
+  filter(grepl("Женщины",PAT_GROUP)) %>%
+  group_by(STRAIN) %>%
+  summarise(Count = n()) %>%
+  ungroup() %>%
+  mutate(Percent = round(100 * Count / sum(Count))) %>%
+  arrange(desc(Percent)) %>%
+  mutate(csum = rev(cumsum(rev(Count))),
+         pos = Count/2 + lead(csum, 1),
+         pos = if_else(is.na(pos), Count/2, pos))
+
+validate(need(nrow(org_female) > 0, "Данные отсутствуют"))
+
+ggplot(org_female, aes(x = "" , y = Count, fill = fct_inorder(STRAIN))) +
+  geom_col(width = 1, color = 1) +
+  coord_polar(theta = "y") +
+  scale_fill_brewer(palette = "Pastel1") +
+  geom_label_repel(data = org_female,
+                   aes(y = pos, label = paste0(Count, " (", Percent, "%)")),
+                   size = 4.5, nudge_x = 1, show.legend = FALSE) +
+  guides(fill = guide_legend(title = "Организм")) +
+  theme_void()
+```
+
+### Дети
+
+```{r, echo=FALSE, message=FALSE, fig.width = 12}
+org_children <- data %>%
+  filter(grepl("Дети",PAT_GROUP)) %>%
+  group_by(STRAIN) %>%
+  summarise(Count = n()) %>%
+  ungroup() %>%
+  mutate(Percent = round(100 * Count / sum(Count))) %>%
+  arrange(desc(Percent)) %>%
+  mutate(csum = rev(cumsum(rev(Count))),
+         pos = Count/2 + lead(csum, 1),
+         pos = if_else(is.na(pos), Count/2, pos))
+
+validate(need(nrow(org_children) > 0, "Данные отсутствуют"))
+
+ggplot(org_children, aes(x = "" , y = Count, fill = fct_inorder(STRAIN))) +
+  geom_col(width = 1, color = 1) +
+  coord_polar(theta = "y") +
+  scale_fill_brewer(palette = "Pastel1") +
+  geom_label_repel(data = org_children,
+                   aes(y = pos, label = paste0(Count, " (", Percent, "%)")),
+                   size = 4.5, nudge_x = 1, show.legend = FALSE) +
+  guides(fill = guide_legend(title = "Организм")) +
+  theme_void()
+```
+
+## Структура диагнозов по группам пациентов
+
+```{r, echo=FALSE, message=FALSE, fig.width = 12}
+diag <- data %>% group_by(PAT_GROUP, mkb_name) %>%
+  summarise(Count = n()) %>%
+  ungroup() %>%
+  pivot_wider(names_from = "PAT_GROUP", values_from = "Count", values_fill = 0) %>%
+  mutate(mkb_name = case_when(
+    mkb_name == "Интерстициальный цистит (хронический)" ~ "Хронический цистит",
+    mkb_name == "Необструктивный хронический пиелонефрит, связанный с рефлюксом" ~ "Хронический пиелонефрит",
+    mkb_name == "Острый тубулоинтерстициальный нефрит" ~ "Острый нефрит",
+    mkb_name == "Инфекция мочевыводящих путей без установленной локализации" ~ "Инфекция МВП",
+    TRUE ~ mkb_name
+  ))
+
+validate(need(nrow(diag) > 0, "Данные отсутствуют"))
+
+# Определение заранее возможные категории
+categories <- c(
+  'Дети, неосложненные', 'Дети, осложненные', 
+  'Женщины, неосложненные', 'Женщины, осложненные', 
+  'Мужчины, неосложненные', 'Мужчины, осложненные'
+)
+    
+# Добавление недостающих столбцов для упрощенного построения графика
+diag_plot <- diag
+for (i in seq_along(categories)) {
+  category <- categories[i]
+  if (!(category %in% colnames(diag_plot))) {
+    diag_plot[[category]] <- 0
+  }
+}
+# Разворот данных для ggplot2
+diag_long <- diag_plot %>%
+  pivot_longer(
+    cols = all_of(categories),
+    names_to = "Category",
+    values_to = "Count"
+  )
+    
+# Определение цветов для категорий
+category_colors <- c(
+  `Дети, неосложненные` = rgb(247, 167, 102, maxColorValue = 255, alpha = 0.8 * 255),
+  `Дети, осложненные` = rgb(243, 109, 0, maxColorValue = 255, alpha = 0.8 * 255),
+  `Женщины, неосложненные` = rgb(134, 96, 142, maxColorValue = 255, alpha = 0.8 * 255),
+  `Женщины, осложненные` = rgb(108, 48, 130, maxColorValue = 255, alpha = 0.8 * 255),
+  `Мужчины, неосложненные` = rgb(39, 188, 209, maxColorValue = 255, alpha = 0.8 * 255),
+  `Мужчины, осложненные` = rgb(36, 107, 206, maxColorValue = 255, alpha = 0.8 * 255)
+)
+
+# Создание графика
+ggplot(diag_long, aes(x = mkb_name, y = Count, fill = Category)) +
+  geom_bar(stat = "identity", position = "stack") +
+  scale_fill_manual(values = category_colors) +
+  labs(x = "", y = "Кол-во", fill = "Category") +
+  theme_minimal() +
+  theme(
+    legend.position = "bottom",
+    legend.title = element_blank()
+  )
+
+# Вывод таблицы
+diag_plot %>% gt() %>% 
+  cols_label(mkb_name = "Диагноз") %>% 
+  tab_spanner(label = "Дети", columns = starts_with("Дети")) %>% 
+  tab_spanner(label = "Женщины", columns = starts_with("Женщины")) %>% 
+  tab_spanner(label = "Мужчины", columns = starts_with("Мужчины")) %>% 
+  cols_label(
+    ends_with(", неосложненные") ~ "Неосложненные",
+    ends_with(", осложненные") ~ "Осложненные"
+  ) %>% 
+  opt_row_striping()
+```
+
+
+## Распределение пациентов по городам
+
+```{r, echo=FALSE, message=FALSE, fig.width = 12}
+
+citypat <- data%>% 
+  group_by(CITYNAME, PAT_GROUP) %>% summarise(Count = n()) %>%
+  ungroup() %>%
+  pivot_wider(names_from = "PAT_GROUP", values_from = "Count", values_fill = 0) %>%
+  select(order(colnames(.)))
+
+citypat %>% gt() %>%
+  cols_label(CITYNAME = "Город") %>% 
+  tab_spanner(label = "Дети", columns = starts_with("Дети")) %>% 
+  tab_spanner(label = "Женщины", columns = starts_with("Женщины")) %>% 
+  tab_spanner(label = "Мужчины", columns = starts_with("Мужчины")) %>% 
+  cols_label(
+    ends_with(", неосложненные") ~ "Неосложненные",
+    ends_with(", осложненные") ~ "Осложненные"
+  ) %>% 
+  opt_row_striping()
+```

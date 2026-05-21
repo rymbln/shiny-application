@@ -1,0 +1,36 @@
+# Git
+.git
+.gitignore
+
+# R / renv
+renv/library/
+renv/staging/
+*.Rhistory
+*.RData
+*.Rproj.user/
+
+# Документация и лишние файлы
+README.md
+README.Rmd
+*.md
+docs/
+manuals/
+
+# Системные файлы
+.DS_Store
+Thumbs.db
+
+# Логи и кэш
+*.log
+rsconnect/
+
+# Docker-файлы (не нужны внутри образа)
+Dockerfile
+.dockerignore
+docker-compose*.yml
+
+# Виртуальные окружения и IDE
+.vscode/
+.idea/
+*.swp
+*.swo
