@@ -35,7 +35,7 @@ jobs:
       - name: 🐍 Set up R
         uses: r-lib/actions/setup-r@v2
         with:
-          r-version: '4.5.2'  # Указываем нужную версию
+          r-version: '4.5.2'
           use-public-rspm: true
           Ncpus: 2
 
@@ -54,15 +54,16 @@ jobs:
             libtiff5-dev \
             libjpeg-dev
 
-      - name: 📚 Install R package dependencies
-        if: ${{ !file.exists('renv.lock') }}
+      # ✅ ИСПРАВЛЕНО: используем hashFiles() вместо file.exists()
+      - name: 📚 Install R package dependencies (fallback without renv)
+        if: ${{ hashFiles('renv.lock') == '' }}
         run: |
           install.packages("remotes")
           remotes::install_deps(dependencies = TRUE)
         shell: Rscript {0}
 
-      - name: 📦 Restore renv cache
-        if: ${{ file.exists('renv.lock') }}
+      - name: 📦 Restore renv cache (if renv.lock exists)
+        if: ${{ hashFiles('renv.lock') != '' }}
         uses: r-lib/actions/setup-renv@v2
         with:
           cache-version: 1
@@ -72,11 +73,10 @@ jobs:
           install.packages("rsconnect")
           library(rsconnect)
           setAccountInfo(
-            name = "${{ env.SHINYAPPS_ACCOUNT }}",
+            name = "${{ vars.SHINYAPPS_ACCOUNT }}",
             token = "${{ secrets.SHINYAPPS_TOKEN }}",
             secret = "${{ secrets.SHINYAPPS_SECRET }}"
           )
-          # Сохраняем конфиг для последующих шагов
           saveConfig()
         shell: Rscript {0}
         env:
@@ -85,15 +85,9 @@ jobs:
       - name: 🚀 Deploy to shinyapps.io
         run: |
           library(rsconnect)
-          
-          # Параметры деплоя
           app_name <- "${{ vars.SHINYAPPS_APP_NAME || 'my-shiny-app' }}"
           app_dir <- getwd()
-          
-          # Логируем начало
           cat("🚀 Начинаю деплой приложения:", app_name, "\n")
-          
-          # Деплой с подробным логом
           deployApp(
             appName = app_name,
             appDir = app_dir,
@@ -103,7 +97,6 @@ jobs:
             logLevel = "verbose",
             launch.browser = FALSE
           )
-          
           cat("✅ Деплой завершён!\n")
           cat("🔗 Приложение доступно: https://", 
               "${{ vars.SHINYAPPS_ACCOUNT || 'your-account-name' }}", 
