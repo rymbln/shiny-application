@@ -32,8 +32,8 @@ COPY ./renv.lock ./renv.lock
 COPY . ./app
 
 # install renv & restore packages
-RUN Rscript -e 'install.packages("renv")'
-RUN Rscript -e 'renv::restore()'
+RUN Rscript -e 'install.packages("renv", repos = "https://cloud.r-project.org")' && \
+    Rscript -e 'renv::restore(prompt = FALSE, rebuild = FALSE)'
 
 # expose port
 EXPOSE 3838
