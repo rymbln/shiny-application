@@ -1,0 +1,14 @@
+# .Rbuildignore — файлы, которые НЕ попадут в бандл shinyapps.io
+^\.github/
+^Dockerfile$
+^\.dockerignore$
+^README\.md$
+^\.git/
+^\.Rproj\.user/
+^renv/library/
+^renv/staging/
+^renv/cache/
+^.*\.Rhistory$
+^.*\.RData$
+^\.vscode/
+^\.idea/
