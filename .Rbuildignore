@@ -1,3 +1,5 @@
+^renv$
+^renv\.lock$
 # .Rbuildignore — файлы, которые НЕ попадут в бандл shinyapps.io
 ^\.github/
 ^Dockerfile$
