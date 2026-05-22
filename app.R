@@ -9,6 +9,7 @@
 
 library(shiny)
 library(bslib)
+library(bsicons)
 
 library(tidyverse)
 

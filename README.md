@@ -6,6 +6,22 @@
 docker build -t demo-shiny-app .
 ```
 
+## Публикация docker-образа на DockerHub
+
+```bash
+# Логинимся в DockerHub
+docker login
+
+# Собираем образ для репозитория в DockerHub
+docker build -t rymbln/demo-shiny-app .
+
+# Отправляем собранный образ на DockerHub
+docker push rymbln/demo-shiny-app
+
+# Запускаем образ из DockerHub
+docker run -d --rm --name my-demo-shiny-app -p 3838:3838 rymbln/demo-shiny-app
+```
+
 ## Запуск контейнера docker
 
 ```bash
