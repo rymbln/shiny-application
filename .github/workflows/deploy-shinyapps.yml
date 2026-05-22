@@ -73,25 +73,25 @@ jobs:
           install.packages("rsconnect")
           library(rsconnect)
           setAccountInfo(
-            name = "${{ vars.SHINYAPPS_ACCOUNT }}",
+            name = "${{ secrets.SHINYAPPS_ACCOUNT }}",
             token = "${{ secrets.SHINYAPPS_TOKEN }}",
             secret = "${{ secrets.SHINYAPPS_SECRET }}"
           )
           saveConfig()
         shell: Rscript {0}
         env:
-          SHINYAPPS_ACCOUNT: ${{ vars.SHINYAPPS_ACCOUNT || 'your-account-name' }}
+          SHINYAPPS_ACCOUNT: ${{ secrets.SHINYAPPS_ACCOUNT || 'your-account-name' }}
 
       - name: 🚀 Deploy to shinyapps.io
         run: |
           library(rsconnect)
-          app_name <- "${{ vars.SHINYAPPS_APP_NAME || 'my-shiny-app' }}"
+          app_name <- "${{ secrets.SHINYAPPS_APP_NAME || 'my-shiny-app' }}"
           app_dir <- getwd()
           cat("🚀 Начинаю деплой приложения:", app_name, "\n")
           deployApp(
             appName = app_name,
             appDir = app_dir,
-            account = "${{ vars.SHINYAPPS_ACCOUNT || 'your-account-name' }}",
+            account = "${{ secrets.SHINYAPPS_ACCOUNT || 'your-account-name' }}",
             forceUpdate = TRUE,
             lint = FALSE,
             logLevel = "verbose",
@@ -99,7 +99,7 @@ jobs:
           )
           cat("✅ Деплой завершён!\n")
           cat("🔗 Приложение доступно: https://", 
-              "${{ vars.SHINYAPPS_ACCOUNT || 'your-account-name' }}", 
+              "${{ secrets.SHINYAPPS_ACCOUNT || 'your-account-name' }}", 
               ".shinyapps.io/", app_name, "\n", sep = "")
         shell: Rscript {0}
 
