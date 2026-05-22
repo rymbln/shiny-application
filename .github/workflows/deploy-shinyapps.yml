@@ -87,7 +87,7 @@ jobs:
           setAccountInfo(name = account, token = token, secret = secret)
         shell: Rscript {0}
         env:
-          SHINYAPPS_ACCOUNT: ${{ vars.SHINYAPPS_ACCOUNT }}
+          SHINYAPPS_ACCOUNT: ${{ secrets.SHINYAPPS_ACCOUNT }}
           SHINYAPPS_TOKEN: ${{ secrets.SHINYAPPS_TOKEN }}
           SHINYAPPS_SECRET: ${{ secrets.SHINYAPPS_SECRET }}
 
@@ -115,8 +115,8 @@ jobs:
           cat("🔗 Приложение: https://", account, ".shinyapps.io/", app_name, "\n", sep = "")
         shell: Rscript {0}
         env:
-          SHINYAPPS_ACCOUNT: ${{ vars.SHINYAPPS_ACCOUNT }}
-          SHINYAPPS_APP_NAME: ${{ vars.SHINYAPPS_APP_NAME }}
+          SHINYAPPS_ACCOUNT: ${{ secrets.SHINYAPPS_ACCOUNT }}
+          SHINYAPPS_APP_NAME: ${{ secrets.SHINYAPPS_APP_NAME }}
 
       - name: 📝 Upload deployment logs (при ошибке)
         if: failure()
