@@ -107,7 +107,7 @@ jobs:
             account = account,
             forceUpdate = TRUE,
             lint = FALSE,
-            logLevel = "verbose",
+            logLevel = "normal",
             launch.browser = FALSE
           )
           
